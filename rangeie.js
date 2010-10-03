@@ -93,6 +93,7 @@ RangeIE.Selection = function() {
     this._ranges = [];
     if (this._ranges.length === 0) {
         range = new RangeIE.Range;
+        range._refresh();
         this.addRange(range);
     }
 };
@@ -243,7 +244,7 @@ RangeIE.Range = function() {
     var container;
     this._range = document.selection.createRange();
     this._bounder = window.document.activeElement;
-    this._refresh();
+    this._reset();
 };
 
 /**
@@ -259,11 +260,14 @@ RangeIE.Range.prototype = {
      * @return {Bool}
      */
     selectNode : function(referenceNode) {
-        if (this._isTextNode(referenceNode)) {
-            this._selectTextNode(referenceNode);
+        var st;
+        st = this._selectNode(referenceNode);
+        if (st) {
+            this._range.select();
+            this._refresh();
         }
         else {
-            this._selectElmNode(referenceNode);
+            this._reset();
         }
         return true;
     },
@@ -278,7 +282,69 @@ RangeIE.Range.prototype = {
     selectNodeContents : function(referenceNode) {
         this._range.moveToElementText(referenceNode);
         this._range.select();
+        this._refresh();
         return true;
+    },
+
+    /**
+     * Sets the start position of a Range.
+     * 
+     * @todo Currently, only one element can be within a range.
+     *       Need to add ability to span multiple elements.
+     * @see https://developer.mozilla.org/en/DOM/range.setStart
+     * @param {HTMLElement} startNode
+     * @param {Int} startOffset
+     * @return {Bool}
+     */
+    setStart : function(startNode, startOffset) {
+        var st;
+        st = true;
+        if (this.commonAncestorContainer === null) {
+            st = this._selectNode(startNode);
+        }
+        if (st) {
+            this._range.moveStart('character', startOffset);
+            this._range.select();
+            this._refresh();
+        }
+        else {
+            this._reset();
+        }
+        return st;
+    },
+
+    /**
+     * Sets the end position of a Range. 
+     * 
+     * @todo Currently, only one element can be within a range.
+     *       Need to add ability to span multiple elements.
+     * @see https://developer.mozilla.org/en/DOM/range.setEnd
+     * @param {HTMLElement} endNode
+     * @param {Int} endOffset
+     * @return {Bool}
+     */
+    setEnd : function(endNode, endOffset) {
+        var st, txtLen, offset;
+        st = true;
+        if (this.commonAncestorContainer === null) {
+            st = this._selectNode(endNode);
+        }
+        if (st) {
+            if (this._isTextNode(endNode)) {
+                txtLen = endNode.length;
+            }
+            else {
+                txtLen = endNode.innerText.length;
+            }
+            offset = -(txtLen - endOffset);
+            this._range.moveEnd('character', offset);
+            this._range.select();
+            this._refresh();
+        }
+        else {
+            this._reset();
+        }
+        return st;
     },
 
     /**
@@ -297,7 +363,7 @@ RangeIE.Range.prototype = {
     /**
      * Sets the Range to contain the node and its contents.
      * 
-     * @see https://developer.mozilla.org/en/DOM/range.selectNode
+     * @see https://developer.mozilla.org/en/DOM/range.insertNode
      * @param {HTMLElement} referenceNode
      * @return {Bool}
      */
@@ -345,6 +411,21 @@ RangeIE.Range.prototype = {
     },
 
     /**
+     * Selects node
+     * 
+     * @param {HTMLElement} referenceNode
+     * @return {Bool}
+     */
+    _selectNode : function(referenceNode) {
+        if (this._isTextNode(referenceNode)) {
+            return this._selectTextNode(referenceNode);
+        }
+        else {
+            return this._selectElmNode(referenceNode);
+        }
+    },
+
+    /**
      * Select Node helper for text node
      * 
      * @private
@@ -385,15 +466,13 @@ RangeIE.Range.prototype = {
             this._range.collapse(true);
             this._range.moveStart('character', totLen);
             this._range.moveEnd('character', endVal);
-            this._range.select();
-            this._refresh();
+            return true;
         }
         else {
             this._range.moveStart('character', -10000000);
             this._range.moveEnd('character', -10000000);
-            this._reset();
+            return false;
         }
-        return true;
     },
 
     /**
@@ -407,8 +486,6 @@ RangeIE.Range.prototype = {
         this._range.moveToElementText(referenceNode);
         this._range.moveStart('character', -1);
         this._range.moveEnd('character', 1);
-        this._range.select();
-        this._refresh();
         return true;
     },
 
