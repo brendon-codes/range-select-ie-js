@@ -229,6 +229,7 @@ RangeIE.Selection.prototype = {
     _removeRange : function(index) {
         this._ranges[index].detach();
         delete this._ranges[index];
+        this._ranges.splice(index, 1);
         return true;
     }
 
@@ -517,10 +518,10 @@ RangeIE.Range.prototype = {
         }
         else {
             this.commonAncestorContainer = container.node;
-            this.endContainer = container.node;
-            this.endContainer = container.offset;
             this.startContainer = container.node;
+            this.endContainer = container.node;
             this.startOffset = container.offset;
+            this.endOffset = container.offset;
         }
         return true;
     },
