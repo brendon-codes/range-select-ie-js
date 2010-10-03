@@ -15,14 +15,18 @@
                 //var newTxt = document.createTextNode('Testing');
                 //newNode.appendChild(newTxt);
                 ref1.focus();
-                //var sel = document.selection.createRange();
-                //sel.moveToElementText(ref1);
-                //sel.select();
-                var sel = window.getSelection();
+                //var sel = window.getSelection();
                 //sel.collapseToEnd();
-                var range = sel.getRangeAt(0);
-                range.selectNode(ref2);
+                //var range = sel.getRangeAt(0);
+                //range.selectNode(ref2);
+                //sel = window.getSelection();
+                //range = sel.getRangeAt(0);
+                range = document.createRange();
+                range.setStart(ref1.childNodes[1], 1);
+                range.setEnd(ref1.childNodes[1], 2);
                 range.deleteContents();
+                range.collapse(true);
+                //range.detach();
                 //range.insertNode(newNode);
                 //sel.collapseToStart();
                 //console.log(range.startContainer.innerText,
