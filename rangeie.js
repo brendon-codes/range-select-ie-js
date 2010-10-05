@@ -189,6 +189,7 @@ RangeIE.Selection.prototype = {
  */
 RangeIE.Range = function() {
     var container;
+    this.isRangeIE = true;
     this._range = document.selection.createRange();
     this._bounder = window.document.activeElement;
     this._reset();
@@ -324,7 +325,7 @@ RangeIE.Range.prototype = {
         this.collapse(true);
         this._range.pasteHTML(referenceNode.outerHTML);
         this._refresh();
-        return true;
+        return this.commonAncestorContainer;
     },
 
     /**
