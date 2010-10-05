@@ -6,64 +6,10 @@
  * Author: Brendon Crawford <brendon at aphexcreations dot net>
  * Sponsored By: Bay Street Capital <http://baystreetcapital.com>
  * Homepage: http://github.com/brendoncrawford/rangeie/
+ *
+ * Please see the README for more information, including usage instructions.
  * 
- * The Mozilla Range documentation can be found at:
- *     https://developer.mozilla.org/en/DOM/range
- * 
- * The Mozilla Selection documentation can be found at:
- *     https://developer.mozilla.org/en/DOM/Selection
- * 
- * The W3C DOM Range documentation can be found at:
- *     http://www.w3.org/TR/DOM-Level-2-Traversal-Range/ranges.html
- * 
- * #### Background ####
- * 
- * Before IE9, IE only supports what is known as a TextRange object, but it
- * does not support the W3C DOM Range object nor does it support the Mozilla
- * Selection object. As a result, implementing cross-browser JavaScript
- * applications for manipulating and managing text ranges/selections can be
- * quite difficult.
- * 
- * RangeIE is not a 100% implementation of Range/Selection, but it does cover
- * most concepts. Keep in mind that RangeIE was originally intended to
- * work with contenteditable divs containing text, spans, and anchor elements.
- * It has not been developed to work with designmode documents or
- * contenteditable elements containing images or block-level elements such
- * as divs and lists.
- * 
- * Please note that you must call ELM.focus() before making any use of
- * RangeIE, where ELM is your contenteditable element, typically a div.
- * 
- * Please also note that RangeIE so far has only been tested on IE8, and
- * will not be necessary for use in IE9.
- * 
- * #### Usage ####
- * 
- * <script type="text/javascript" src="rangeie.js"></script>
- * <script type="text/javascript">
- *     function deleteThirdElement() {
- *         var elm, range, child;
- *         elm = document.getElementById('editor');
- *         // Focus is mandatory before making any calls to RangeIE
- *         elm.focus();
- *         child = elm.childNodes[2];
- *         range = window.document.createRange();
- *         range.selectNode(child);
- *         range.deleteContents();
- *         range.detach();
- *         return false;
- *     }
- * </script>
- * <div id="editor" contenteditable="true" style="border:1px solid #000">
- *     Hello World
- *     <span>Foo Bar</span>
- *     Foo Baz
- * </div>
- * <div>
- *     <a href="javascript:deleteThirdElement();">Delete Third Element</a>
- * </div>
- * 
- * #### License ####
+ * License
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -258,6 +204,9 @@ RangeIE.Range.prototype = {
      * 
      * @see https://developer.mozilla.org/en/DOM/range.selectNode
      * @param {HTMLElement} referenceNode
+     *        This must be a node which has been added to the DOM via
+     *        insertBefore, appendChild, etc. If this node has not been
+     *        added to the DOM, IE will give an "invalid argument" error.
      * @return {Bool}
      */
     selectNode : function(referenceNode) {
@@ -278,6 +227,9 @@ RangeIE.Range.prototype = {
      * 
      * @see https://developer.mozilla.org/en/DOM/range.selectNodeContents
      * @param {HTMLElement} referenceNode
+     *        This must be a node which has been added to the DOM via
+     *        insertBefore, appendChild, etc. If this node has not been
+     *        added to the DOM, IE will give an "invalid argument" error.
      * @return {Bool}
      */
     selectNodeContents : function(referenceNode) {
