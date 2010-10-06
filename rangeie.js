@@ -321,8 +321,15 @@ RangeIE.Range.prototype = {
      * @return {Bool}
      */
     insertNode : function(referenceNode) {
+        var data;
+        if (this._isTextNode(referenceNode)) {
+            data = referenceNode.nodeValue;
+        }
+        else {
+            data = referenceNode.outerHTML;
+        }
         this.collapse(true);
-        this._range.pasteHTML(referenceNode.outerHTML);
+        this._range.pasteHTML(data);
         this._refresh();
         return this.commonAncestorContainer;
     },
