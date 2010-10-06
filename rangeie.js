@@ -134,11 +134,10 @@ RangeIE.Selection.prototype = {
      * @return {Bool}
      */
     collapseToEnd : function() {
-        var range;
+        var range, childs, i, _i, node;
         if (this._ranges.length > 0) {
             range = this._ranges[this._ranges.length-1];
             range.collapse(false);
-            range._range.select();
             return true;
         }
         else {
@@ -361,6 +360,27 @@ RangeIE.Range.prototype = {
     toString : function() {
         var ret;
         ret = this._range.text;
+        return ret;
+    },
+
+    _isLastNode : function() {
+        var i, node, ret, childs;
+        childs = this._bounder.childNodes;
+        node = null;
+        for (i = childs.length-1; i >= 0; i--) {
+            node = childs[i];
+            if (this._isTextNode(node)) {
+                if (node.length > 0) {
+                    break;
+                }
+            }
+            else {
+                if (node.innerText.length > 0) {
+                    break;
+                }
+            }
+        }
+        ret = (node === this.endContainer);
         return ret;
     },
 
