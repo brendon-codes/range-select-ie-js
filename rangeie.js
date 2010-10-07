@@ -770,7 +770,7 @@ RangeIE.Range.prototype = {
                 "previously added to the DOM using appendChild, " +
                 "insertBefore or other such DOM methods. Error " +
                 "occurred at: " + o;
-            throw (s);
+            throw (new Error(s));
         }
         else {
             return true;
