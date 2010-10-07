@@ -627,7 +627,6 @@ RangeIE.Range.prototype = {
         while (true) {
             r1.moveStart('character', -1);
             r2 = r1.duplicate();
-            r2.moveEnd('character', -1);
             r2.collapse(true);
             p = r2.parentElement();
             if (!this._isChild(this._bounder, p)) {
