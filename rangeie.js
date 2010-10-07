@@ -211,6 +211,7 @@ RangeIE.Range.prototype = {
      */
     selectNode : function(referenceNode) {
         var st;
+        this._checkNode(referenceNode, 'selectNode');
         st = this._selectNode(referenceNode);
         if (st) {
             this._range.select();
@@ -233,6 +234,7 @@ RangeIE.Range.prototype = {
      * @return {Bool}
      */
     selectNodeContents : function(referenceNode) {
+        this._checkNode(referenceNode, 'selectNodeContents');
         this._range.moveToElementText(referenceNode);
         this._range.select();
         this._refresh();
@@ -251,6 +253,7 @@ RangeIE.Range.prototype = {
      */
     setStart : function(startNode, startOffset) {
         var st;
+        this._checkNode(startNode, 'setStart');
         st = true;
         if (this.commonAncestorContainer === null) {
             st = this._selectNode(startNode);
@@ -278,6 +281,7 @@ RangeIE.Range.prototype = {
      */
     setEnd : function(endNode, endOffset) {
         var st, txtLen, offset;
+        this._checkNode(endNode, 'setEnd');
         st = true;
         if (this.commonAncestorContainer === null) {
             st = this._selectNode(endNode);
@@ -438,7 +442,7 @@ RangeIE.Range.prototype = {
         this._range.collapse(true);
         i = 0;
         while (true) {
-            if (m <= 0) {
+            if (m === 0) {
                 break;
             }
             else if (this._range.text === data) {
@@ -455,7 +459,7 @@ RangeIE.Range.prototype = {
             else {
                 i++;
             }
-            m = this._range.moveEnd('character', +1);
+            m = Math.abs(this._range.moveEnd('character', +1));
         }
         // @todo BrendonCrawford: find a cleaner solution
         // than having to do this
@@ -464,7 +468,6 @@ RangeIE.Range.prototype = {
         this._range.moveEnd('character', referenceNode.length);
         return true;
     },
-
 
     /**
      * Select Node helper for non-text node
@@ -628,18 +631,18 @@ RangeIE.Range.prototype = {
      * @return {Int}
      */
     _getTextAbsOffset : function() {
-        var r1, r2, i, rt, j, limit, p;
+        var r1, r2, i, rt, j, limit, p, m;
         r1 = document.selection.createRange();
         i = 0;
         rt = '';
         j = 0;
         limit = 10000;
         while (true) {
-            r1.moveStart('character', -1);
+            m = Math.abs(r1.moveStart('character', -1));
             r2 = r1.duplicate();
             r2.collapse(true);
             p = r2.parentElement();
-            if (!this._isChild(this._bounder, p)) {
+            if (!this._isBreakout(this._bounder, p)) {
                 break;
             }
             if (r1.text !== '' && rt !== r1.text) {
@@ -647,8 +650,7 @@ RangeIE.Range.prototype = {
             }
             rt = r1.text;
             // Prevent runaway loops here
-            if (j >= limit) {
-                this._dumpTxtAbsOffsetError(this._bounder, r1, p);
+            if (m === 0) {
                 i = 0;
                 break;
             }
@@ -663,9 +665,10 @@ RangeIE.Range.prototype = {
      * @param {HTMLElement} bounder
      * @param {TextRange} r1
      * @param {HTMLElement} p
+     * @param {Int} i
      * @return {Bool}
      */
-    _dumpTxtAbsOffsetError : function(bounder, r1, p) {
+    _dumpTxtAbsOffsetError : function(bounder, r1, p, i) {
         if (window.console !== undefined &&
                 window.console.warn !== undefined) {
             console.warn('');
@@ -699,7 +702,7 @@ RangeIE.Range.prototype = {
      * @param {HTMLElement|null} child
      * @return {Bool}
      */
-    _isChild : function(parent, child) {
+    _isBreakout : function(parent, child) {
         if (parent === null || child === null) {
             return false;
         }
@@ -716,6 +719,83 @@ RangeIE.Range.prototype = {
         else {
             return parent.contains(child);
         }
+    },
+
+    /**
+     * Determines if parent is ancestor of child
+     * 
+     * @param parent {HTMLElement|Document} parent
+     * @param child {HTMLElement}
+     * @return {Bool}
+     */
+    _isAncestor : function(parent, child) {
+        var f;
+        f = false;
+        while (true) {
+            if (child === null || child === undefined) {
+                break;
+            }
+            if (parent === window.document) {
+                if (child.nodeName !== null && child.nodeName !== undefined) {
+                    if (child.nodeName.toLowerCase() === 'html') {
+                        f = true;
+                        break;
+                    }
+                }
+            }
+            if (child === parent) {
+                f = true;
+                break;
+            }
+            child = child.parentNode;
+        }
+        return f;
+    },
+
+    /**
+     * Checks if node is within the DOM. Throws error if not.
+     * 
+     * @todo BrendonCrawford: Is there any way to get line numbers in here?
+     * @param {HTMLElement} referenceNode
+     * @param {String} funcName
+     */
+    _checkNode : function(referenceNode, funcName) {
+        var f, o, s;
+        if (!this._isAncestor(window.document, referenceNode)) {
+            f = arguments.callee.caller.caller;
+            o = this._getCallerString(f, funcName);
+            s =
+                "RangeIE: When inserting or selecting nodes, the node " +
+                "must already exist in the document. It must have been " +
+                "previously added to the DOM using appendChild, " +
+                "insertBefore or other such DOM methods. Error " +
+                "occurred at: " + o;
+            throw (s);
+        }
+        else {
+            return true;
+        }
+    },
+
+    /**
+     * Finds caller string of function
+     * 
+     * @param {Function} clr
+     * @param {String} funcName
+     * @return {String}
+     */
+    _getCallerString : function(clr, funcName) {
+        var f, m, r, o;
+        f = clr.toString();
+        r = new RegExp('.*?' + funcName + '.*', 'i');
+        m = r.exec(f);
+        if (m !== null && m[0] !== undefined) {
+            o = m[0].replace(/(^\s+|\s+$)/, '');
+        }
+        else {
+            o = funcName + '(...)';
+        }
+        return o;
     }
 
 };
