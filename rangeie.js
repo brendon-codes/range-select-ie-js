@@ -618,22 +618,68 @@ RangeIE.Range.prototype = {
      * @return {Int}
      */
     _getTextAbsOffset : function() {
-        var r1, i, rt;
+        var r1, r2, i, rt, j, limit, p;
         r1 = document.selection.createRange();
         i = 0;
         rt = '';
+        j = 0;
+        limit = 10000;
         while (true) {
             r1.moveStart('character', -1);
-            //console.log('TXTCHAR:', r1.text.length, r1.text);
-            if (!this._isChild(this._bounder, r1.parentElement())) {
+            r2 = r1.duplicate();
+            r2.moveEnd('character', -1);
+            r2.collapse(true);
+            p = r2.parentElement();
+            if (!this._isChild(this._bounder, p)) {
                 break;
             }
             if (r1.text !== '' && rt !== r1.text) {
                 i++;
             }
             rt = r1.text;
+            // Prevent runaway loops here
+            if (j >= limit) {
+                this._dumpTxtAbsOffsetError(this._bounder, r1, p);
+                i = 0;
+                break;
+            }
+            j++;
         }
         return i;
+    },
+
+    /**
+     * Dumps debug information if offset calculation goes wrong
+     * 
+     * @param {HTMLElement} bounder
+     * @param {TextRange} r1
+     * @param {HTMLElement} p
+     * @return {Bool}
+     */
+    _dumpTxtAbsOffsetError : function(bounder, r1, p) {
+        if (window.console !== undefined &&
+                window.console.warn !== undefined) {
+            console.warn('');
+            console.warn('--- BEGIN ---');
+            console.warn('Function:', '_getTextAbsOffset');
+            console.warn('Message:', 'Recursion limit reached');
+            console.warn('Var:', 'r1.text.length=', r1.text.length);
+            console.warn('Var:', 'i=', i);
+            console.warn('Var:', 'r1.text=',
+                         r1.text.replace(/\s+/ig, ' '));
+            console.warn('Var:', 'p.outerHTML=',
+                    p.outerHTML.replace(/\s+/ig, ' '));
+            console.warn('Var:', 'this._bounder.outerHTML=',
+                    bounder.outerHTML.replace(/\s+/ig, ' '));
+            console.warn('--- END ---');
+            console.warn('');
+            return true;
+        }
+        else {
+            window.alert(
+                'Please enable console to see important debug information');
+            return false;
+        }
     },
 
     /**
