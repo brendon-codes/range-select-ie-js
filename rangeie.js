@@ -618,14 +618,22 @@ RangeIE.Range.prototype = {
      * @return {Int}
      */
     _getTextAbsOffset : function() {
-        var r1, r2, s1, s2, offset;
+        var r1, i, rt;
         r1 = document.selection.createRange();
-        r2 = document.selection.createRange();
-        r1.moveToElementText(this._bounder);
-        s1 = Math.abs(r1.moveStart('character', -100000000));
-        s2 = Math.abs(r2.moveStart('character', -100000000));
-        offset = s2 - s1;
-        return offset;
+        i = 0;
+        rt = '';
+        while (true) {
+            r1.moveStart('character', -1);
+            //console.log('TXTCHAR:', r1.text.length, r1.text);
+            if (!this._isChild(this._bounder, r1.parentElement())) {
+                break;
+            }
+            if (r1.text !== '' && rt !== r1.text) {
+                i++;
+            }
+            rt = r1.text;
+        }
+        return i;
     },
 
     /**
