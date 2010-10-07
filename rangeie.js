@@ -413,8 +413,8 @@ RangeIE.Range.prototype = {
      * @param {HTMLElement} referenceNode
      * @return {Bool}
      */
-    _selectTextNode : function(referenceNode) {
-        var childs, i, _i, txtLen, totLen, starter, cnode, node;
+    _selectTextNode2 : function(referenceNode) {
+        var childs, i, _i, txtLen, totLen, startVal, cnode, node, endVal;
         childs = this._bounder.childNodes;
         txtLen = 0;
         totLen = 0;
@@ -444,6 +444,12 @@ RangeIE.Range.prototype = {
                 endVal = totLen + node.innerText.length;
             }
             this._range.moveToElementText(this._bounder);
+            console.log('');
+            console.log('---BEGIN---');
+            console.log(this._bounder.innerText.substr(0, totLen));
+            console.log(this._range.text.substr(0, totLen));
+            console.log('---END---');
+            console.log('');
             this._range.collapse(true);
             this._range.moveStart('character', totLen);
             this._range.moveEnd('character', endVal);
@@ -455,6 +461,69 @@ RangeIE.Range.prototype = {
             return false;
         }
     },
+
+    /**
+     * Select Node helper for text node
+     * 
+     * @private
+     * @param {HTMLElement} referenceNode
+     * @return {Bool}
+     */
+    _selectTextNode : function(referenceNode) {
+        var found, j, _j, cnode, childs, data, i, m, totLen, txtLen;
+        childs = this._bounder.childNodes;
+        txtLen = 0;
+        totLen = 0;
+        cnode = null;
+        found = false;
+        for (j = 0, _j = childs.length; j < _j; j++) {
+            cnode = childs[j];
+            if (cnode === referenceNode) {
+                break;
+            }
+            if (this._isTextNode(cnode)) {
+                txtLen = cnode.length;
+            }
+            else {
+                txtLen = cnode.innerText.length;
+            }
+            totLen += txtLen;
+        }
+        console.log('---BEGIN---');
+        console.log('totLen:', totLen);
+        data = this._bounder.innerText.substr(0, totLen);
+        console.log('data:', data);
+        this._range.moveToElementText(this._bounder);
+        this._range.collapse(true);
+        i = 0;
+        while (true) {
+            if (this._range.text === data) {
+                if (found) {
+                    i++;
+                }
+                else {
+                    found = true;
+                }
+            }
+            else if (found) {
+                break;
+            }
+            else {
+                i++;
+            }
+            m = this._range.moveEnd('character', +1);
+            if (m <= 0) {
+                break;
+            }
+        }
+        console.log('i:', i);
+        this._range.collapse(false);
+        this._range.moveEnd('character', +1);
+        console.log('this._range.text:', this._range.text);
+        console.log('---END--');
+        return true;
+    },
+
 
     /**
      * Select Node helper for non-text node
