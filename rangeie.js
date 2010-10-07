@@ -413,62 +413,6 @@ RangeIE.Range.prototype = {
      * @param {HTMLElement} referenceNode
      * @return {Bool}
      */
-    _selectTextNode2 : function(referenceNode) {
-        var childs, i, _i, txtLen, totLen, startVal, cnode, node, endVal;
-        childs = this._bounder.childNodes;
-        txtLen = 0;
-        totLen = 0;
-        cnode = null;
-        node = null;
-        for (i = 0, _i = childs.length; i < _i; i++) {
-            cnode = childs[i];
-            if (cnode === referenceNode) {
-                node = cnode;
-                break;
-            }
-            // Text Node
-            if (this._isTextNode(cnode)) {
-                txtLen = cnode.length;
-            }
-            // Elm Node
-            else {
-                txtLen = cnode.innerText.length;
-            }
-            totLen += txtLen;
-        }
-        if (node !== null) {
-            if (this._isTextNode(node)) {
-                endVal = totLen + node.length;
-            }
-            else {
-                endVal = totLen + node.innerText.length;
-            }
-            this._range.moveToElementText(this._bounder);
-            console.log('');
-            console.log('---BEGIN---');
-            console.log(this._bounder.innerText.substr(0, totLen));
-            console.log(this._range.text.substr(0, totLen));
-            console.log('---END---');
-            console.log('');
-            this._range.collapse(true);
-            this._range.moveStart('character', totLen);
-            this._range.moveEnd('character', endVal);
-            return true;
-        }
-        else {
-            this._range.moveStart('character', -10000000);
-            this._range.moveEnd('character', -10000000);
-            return false;
-        }
-    },
-
-    /**
-     * Select Node helper for text node
-     * 
-     * @private
-     * @param {HTMLElement} referenceNode
-     * @return {Bool}
-     */
     _selectTextNode : function(referenceNode) {
         var found, j, _j, cnode, childs, data, i, m, totLen, txtLen;
         childs = this._bounder.childNodes;
@@ -489,15 +433,15 @@ RangeIE.Range.prototype = {
             }
             totLen += txtLen;
         }
-        console.log('---BEGIN---');
-        console.log('totLen:', totLen);
         data = this._bounder.innerText.substr(0, totLen);
-        console.log('data:', data);
         this._range.moveToElementText(this._bounder);
         this._range.collapse(true);
         i = 0;
         while (true) {
-            if (this._range.text === data) {
+            if (m <= 0) {
+                break;
+            }
+            else if (this._range.text === data) {
                 if (found) {
                     i++;
                 }
@@ -512,15 +456,12 @@ RangeIE.Range.prototype = {
                 i++;
             }
             m = this._range.moveEnd('character', +1);
-            if (m <= 0) {
-                break;
-            }
         }
-        console.log('i:', i);
+        // @todo BrendonCrawford: find a cleaner solution
+        // than having to do this
+        this._range.moveEnd('character', -1);
         this._range.collapse(false);
-        this._range.moveEnd('character', +1);
-        console.log('this._range.text:', this._range.text);
-        console.log('---END--');
+        this._range.moveEnd('character', referenceNode.length);
         return true;
     },
 
