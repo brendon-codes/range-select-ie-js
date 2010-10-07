@@ -30,7 +30,7 @@ most concepts.
 
 RangeIE was originally intended to work with contenteditable divs
 containing text, spans, and anchor elements. It has not been developed
-to work with designmode documents or contenteditable elements
+to work with designmode documents, iframes, or contenteditable elements
 containing images or block-level elements such as divs and lists.
 
 Your script must call ELM.focus() before making any use of
