@@ -423,7 +423,7 @@ RangeIE.Range.prototype = {
             c = this._range.findText(v, startPoint, 6);
             if (c) {
                 container = this._getTextContainer();
-                if (container.node === referenceNode) {
+                if (container === null || container.node === referenceNode) {
                     success = true;
                     break;
                 }
