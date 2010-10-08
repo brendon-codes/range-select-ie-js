@@ -390,6 +390,23 @@ RangeIE.Range.prototype = {
     },
 
     /**
+     * Checks if non-print node
+     * 
+     * @param {HTMLELement} node
+     * @return {Bool}
+     */
+    _isNonPrintNode : function(node) {
+        var name;
+        name = node.nodeName.toLowerCase();
+        if (name === 'br') {
+            return true;
+        }
+        else {
+            return false;
+        }
+    },
+
+    /**
      * Select Node helper for text node
      * 
      * @private
@@ -411,6 +428,9 @@ RangeIE.Range.prototype = {
             if (this._isTextNode(cnode)) {
                 txtLen = cnode.length;
             }
+            else if (this._isNonPrintNode(cnode)){
+                txtLen = 1;
+            }
             else {
                 txtLen = cnode.innerText.length;
             }
@@ -418,6 +438,7 @@ RangeIE.Range.prototype = {
         }
         data = this._bounder.innerText.substr(0, totLen);
         this._range.moveToElementText(this._bounder);
+        //data = this._range.text.substr(0, totLen);
         this._range.collapse(true);
         i = 0;
         while (true) {
