@@ -537,13 +537,72 @@ RangeIE.Range.prototype = {
     /**
      * Gets container for a range having a text element
      * 
+     * @todo BrendonCrawford this method for getting the container
+     *       needs to be eventually completely overhauled. As of now, this
+     *       method is not perfectly reliable.
      * @private
      * @return {Object[HTMLElement node, Int offset]|null}
      */
     _getTextContainer : function() {
-        var cnode, node, i, txtLen, totLen, childs, absOffset;
+        var cnode, node, i, txtLen, totLen, childs, offsetFinder;
         childs = this._bounder.childNodes;
-        absOffset = this._getTextAbsOffset();
+        offsetFinder = this._getTextAbsOffset();
+        if (offsetFinder.nodeIndex >= 0) {
+            // Not exactly sre why, but sometimes a higher nodeIndex will
+            // be returned which does represent a real node.
+            node = null;
+            do {
+                node = childs[offsetFinder.nodeIndex];
+                if (node === undefined) {
+                    offsetFinder.nodeIndex--;
+                }
+                else {
+                    break;
+                }
+            }
+            while (offsetFinder.nodeIndex >= 0);
+            offset = offsetFinder.relOffset;
+            /*
+            console.log('--BEGIN--');
+            console.log('Offset:', offsetFinder.relOffset);
+            console.log('NodeIndex:', offsetFinder.nodeIndex);
+            console.log('Node:', node);node
+            if (node !== undefined) {
+                if (node.nodeType === 3) {
+                    console.log('Node-Text:', node.nodeValue, "#");
+                    console.log('Node-Text-Len:', node.length);
+                }
+                else {
+                    console.log('Node-Elm:', node.innerText, "#");
+                    console.log('Node-Elm-Len:', node.innerText.length);
+                }
+            }
+            console.log('--END--');
+            */
+            return {
+                node : node,
+                offset : offset
+            }
+        }
+        else {
+            return null;
+        }
+    },
+
+
+    /**
+     * Gets container for a range having a text element
+     * 
+     * @todo BrendonCrawford this method for getting the container
+     *       needs to be eventually completely overhauled. As of now, this
+     *       method is not perfectly reliable.
+     * @private
+     * @return {Object[HTMLElement node, Int offset]|null}
+     */
+    _getTextContainer2 : function() {
+        var cnode, node, i, txtLen, totLen, childs, offsetFinder;
+        childs = this._bounder.childNodes;
+        absOffset = this._getTextAbsOffset().absOffset;
         totLen = 0;
         txtLen = 0;
         node = null;
@@ -552,10 +611,10 @@ RangeIE.Range.prototype = {
             cnode = childs[i];
             // Text Node
             if (this._isTextNode(cnode)) {
-                txtLen = cnode.length;
+                txtLen = cnode.length || 1;
             }
             else {
-                txtLen = cnode.innerText.length;
+                txtLen = cnode.innerText.length || 1;
             }
             totLen += txtLen;
             if (totLen >= absOffset) {
@@ -565,6 +624,7 @@ RangeIE.Range.prototype = {
         }
         if (node !== null) {
             offset = (txtLen - (totLen - absOffset));
+            console.log('ABS2:', offset);
             return {
                 node : node,
                 offset : offset
@@ -603,6 +663,17 @@ RangeIE.Range.prototype = {
         return offset;
     },
 
+    _isNonPrintTextRangeChar : function(range) {
+        var nodeDesc;
+        nodeDesc = range.htmlText.toLowerCase();
+        if (nodeDesc === '<br>') {
+            return true;
+        }
+        else {
+            return false;
+        }
+    },
+
     /**
      * Get absolute offset for a text-node
      * 
@@ -610,15 +681,24 @@ RangeIE.Range.prototype = {
      * @return {Int}
      */
     _getTextAbsOffset : function() {
-        var r1, r2, i, rt, j, limit, p, m;
+        var r1, r2, r3, i, rt, j, r3t, r3tl, elmCount,
+            p, m, prevPar, relOffset, out;
         r1 = document.selection.createRange();
         i = 0;
         rt = '';
         j = 0;
-        limit = 10000;
+        p = null;
+        prevPar = null;
+        elmCount = -1;
+        relOffset = 1;
         while (true) {
             m = Math.abs(r1.moveStart('character', -1));
             r2 = r1.duplicate();
+            r3 = r1.duplicate();
+            r3.collapse(true);
+            r3.moveEnd('character', +1);
+            //r3t = r3.text;
+            //r3tl = r3.text.length;
             r2.collapse(true);
             p = r2.parentElement();
             if (!this._isBreakout(this._bounder, p)) {
@@ -633,9 +713,23 @@ RangeIE.Range.prototype = {
                 i = 0;
                 break;
             }
+            // We have hit a new element
+            if (this._isNonPrintTextRangeChar(r3) || prevPar !== p) {
+                elmCount++;
+            }
+            // if on first element, incremenent relative offset
+            else if(elmCount <= 0) {
+                relOffset++;
+            }
+            prevPar = p;
             j++;
         }
-        return i;
+        out = {
+            nodeIndex : elmCount,
+            relOffset : relOffset,
+            absOffset : i
+        };
+        return out;
     },
 
     /**
