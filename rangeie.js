@@ -414,59 +414,32 @@ RangeIE.Range.prototype = {
      * @return {Bool}
      */
     _selectTextNode : function(referenceNode) {
-        var found, j, _j, cnode, childs, data, i, m, totLen, txtLen;
-        childs = this._bounder.childNodes;
-        txtLen = 0;
-        totLen = 0;
-        cnode = null;
-        found = false;
-        for (j = 0, _j = childs.length; j < _j; j++) {
-            cnode = childs[j];
-            if (cnode === referenceNode) {
-                break;
-            }
-            if (this._isTextNode(cnode)) {
-                txtLen = cnode.length;
-            }
-            else if (this._isNonPrintNode(cnode)){
-                txtLen = 1;
-            }
-            else {
-                txtLen = cnode.innerText.length;
-            }
-            totLen += txtLen;
-        }
-        data = this._bounder.innerText.substr(0, totLen);
-        this._range.moveToElementText(this._bounder);
-        //data = this._range.text.substr(0, totLen);
-        this._range.collapse(true);
-        i = 0;
-        while (true) {
-            if (m === 0) {
-                break;
-            }
-            else if (this._range.text === data) {
-                if (found) {
-                    i++;
+        var c, v, container, success, startPoint;
+        success = false;
+        startPoint = 0;
+        while(true) {
+            this._range.moveToElementText(this._bounder);
+            v = referenceNode.nodeValue;
+            c = this._range.findText(v, startPoint, 6);
+            if (c) {
+                container = this._getTextContainer();
+                if (container.node === referenceNode) {
+                    success = true;
+                    break;
                 }
                 else {
-                    found = true;
+                    startPoint +=
+                        (container.absOffset + referenceNode.length);
+                }
+                if (startPoint >= this._bounder.innerText.length) {
+                    break;
                 }
             }
-            else if (found) {
+            else {
                 break;
             }
-            else {
-                i++;
-            }
-            m = Math.abs(this._range.moveEnd('character', +1));
         }
-        // @todo BrendonCrawford: find a cleaner solution
-        // than having to do this
-        this._range.moveEnd('character', -1);
-        this._range.collapse(false);
-        this._range.moveEnd('character', referenceNode.length);
-        return true;
+        return success;
     },
 
     /**
@@ -583,72 +556,10 @@ RangeIE.Range.prototype = {
             }
             while (offsetFinder.nodeIndex >= 0);
             offset = offsetFinder.relOffset;
-            /*
-            console.log('--BEGIN--');
-            console.log('Offset:', offsetFinder.relOffset);
-            console.log('NodeIndex:', offsetFinder.nodeIndex);
-            console.log('Node:', node);node
-            if (node !== undefined) {
-                if (node.nodeType === 3) {
-                    console.log('Node-Text:', node.nodeValue, "#");
-                    console.log('Node-Text-Len:', node.length);
-                }
-                else {
-                    console.log('Node-Elm:', node.innerText, "#");
-                    console.log('Node-Elm-Len:', node.innerText.length);
-                }
-            }
-            console.log('--END--');
-            */
             return {
                 node : node,
-                offset : offset
-            }
-        }
-        else {
-            return null;
-        }
-    },
-
-
-    /**
-     * Gets container for a range having a text element
-     * 
-     * @todo BrendonCrawford this method for getting the container
-     *       needs to be eventually completely overhauled. As of now, this
-     *       method is not perfectly reliable.
-     * @private
-     * @return {Object[HTMLElement node, Int offset]|null}
-     */
-    _getTextContainer2 : function() {
-        var cnode, node, i, txtLen, totLen, childs, offsetFinder;
-        childs = this._bounder.childNodes;
-        absOffset = this._getTextAbsOffset().absOffset;
-        totLen = 0;
-        txtLen = 0;
-        node = null;
-        cnode = null;
-        for (i = 0, _i = childs.length; i < _i; i++) {
-            cnode = childs[i];
-            // Text Node
-            if (this._isTextNode(cnode)) {
-                txtLen = cnode.length || 1;
-            }
-            else {
-                txtLen = cnode.innerText.length || 1;
-            }
-            totLen += txtLen;
-            if (totLen >= absOffset) {
-                node = cnode;
-                break;
-            }
-        }
-        if (node !== null) {
-            offset = (txtLen - (totLen - absOffset));
-            console.log('ABS2:', offset);
-            return {
-                node : node,
-                offset : offset
+                offset : offset,
+                absOffset : offsetFinder.absOffset
             }
         }
         else {
@@ -684,6 +595,12 @@ RangeIE.Range.prototype = {
         return offset;
     },
 
+    /**
+     * Is not print text range char
+     * 
+     * @param {TextRange} range
+     * @return {Bool}
+     */
     _isNonPrintTextRangeChar : function(range) {
         var nodeDesc;
         nodeDesc = range.htmlText.toLowerCase();
@@ -751,41 +668,6 @@ RangeIE.Range.prototype = {
             absOffset : i
         };
         return out;
-    },
-
-    /**
-     * Dumps debug information if offset calculation goes wrong
-     * 
-     * @param {HTMLElement} bounder
-     * @param {TextRange} r1
-     * @param {HTMLElement} p
-     * @param {Int} i
-     * @return {Bool}
-     */
-    _dumpTxtAbsOffsetError : function(bounder, r1, p, i) {
-        if (window.console !== undefined &&
-                window.console.warn !== undefined) {
-            console.warn('');
-            console.warn('--- BEGIN ---');
-            console.warn('Function:', '_getTextAbsOffset');
-            console.warn('Message:', 'Recursion limit reached');
-            console.warn('Var:', 'r1.text.length=', r1.text.length);
-            console.warn('Var:', 'i=', i);
-            console.warn('Var:', 'r1.text=',
-                         r1.text.replace(/\s+/ig, ' '));
-            console.warn('Var:', 'p.outerHTML=',
-                    p.outerHTML.replace(/\s+/ig, ' '));
-            console.warn('Var:', 'this._bounder.outerHTML=',
-                    bounder.outerHTML.replace(/\s+/ig, ' '));
-            console.warn('--- END ---');
-            console.warn('');
-            return true;
-        }
-        else {
-            window.alert(
-                'Please enable console to see important debug information');
-            return false;
-        }
     },
 
     /**
