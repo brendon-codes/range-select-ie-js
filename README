@@ -3,8 +3,9 @@ RangeIE
 JavaScript Range/Selection implementation for Internet Explorer
 
 Author: Brendon Crawford <brendon at aphexcreations dot net>
-Sponsored By: Bay Street Capital <http://baystreetcapital.com>
-Homepage: http://github.com/brendoncrawford/rangeie/
+Homepage: https://github.com/last/rangeie/
+
+Another fun project from Last.vc (http://last.vc/)
 
 The Mozilla Range documentation can be found at:
     https://developer.mozilla.org/en/DOM/range
