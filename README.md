@@ -1,19 +1,14 @@
-RangeIE
-=======
+# RANGE SELECT JS FOR INTERNET EXPLORER < v9
 
-JavaScript Range/Selection implementation for Internet Explorer
 
-* *Author: Brendon Crawford*
-* *Homepage: https://github.com/last/rangeie/*
-* *Sponsored By: [Last.vc](http://last.vc)*
+## Relevant Links
 
 * [Mozilla Range documentation](https://developer.mozilla.org/en/DOM/range)
 * [Mozilla Selection documentation](https://developer.mozilla.org/en/DOM/Selection)
 * [W3C DOM Range documentation](http://www.w3.org/TR/DOM-Level-2-Traversal-Range/ranges.html)
 
 
-Background
-----------
+## Background
 
 Before IE9, IE only supports what is known as a TextRange object, but it
 does not support the W3C DOM Range object nor does it support the Mozilla
@@ -24,8 +19,8 @@ quite difficult.
 RangeIE is not a 100% implementation of Range/Selection, but it does cover
 most concepts.
 
-Caveats
--------
+
+## Caveats
 
 RangeIE was originally intended to work with contenteditable divs
 containing text, spans, and anchor elements. It has not been developed
@@ -44,31 +39,33 @@ of a node which has been added to the document, via *insertBefore*,
 *appendChild*, etc. If this is not the case, you will get an "invalid argument"
 error.
 
-Example Usage
--------------
 
-    <script type="text/javascript" src="rangeie.js"></script>
-    <script type="text/javascript">
-        function deleteThirdElement() {
-            var elm, range, child;
-            elm = document.getElementById('editor');
-            // Focus is mandatory before making any calls to RangeIE
-            elm.focus();
-            child = elm.childNodes[2];
-            range = window.document.createRange();
-            range.selectNode(child);
-            range.deleteContents();
-            range.detach();
-            return false;
-        }
-    </script>
-    <div id="editor" contenteditable="true" style="border:1px solid #000">
-        Hello World
-        <span>Foo Bar</span>
-        Foo Baz
-    </div>
-    <div>
-        <a href="javascript:deleteThirdElement();">Delete Third Element</a>
-    </div>
+## Example Usage
 
+
+```html
+<script type="text/javascript" src="rangeie.js"></script>
+<script type="text/javascript">
+  function deleteThirdElement() {
+    var elm, range, child;
+    elm = document.getElementById('editor');
+    // Focus is mandatory before making any calls to RangeIE
+    elm.focus();
+    child = elm.childNodes[2];
+    range = window.document.createRange();
+    range.selectNode(child);
+    range.deleteContents();
+    range.detach();
+    return false;
+  }
+</script>
+<div id="editor" contenteditable="true" style="border:1px solid #000">
+  Hello World
+  <span>Foo Bar</span>
+  Foo Baz
+</div>
+<div>
+  <a href="javascript:deleteThirdElement();">Delete Third Element</a>
+</div>
+```
 
